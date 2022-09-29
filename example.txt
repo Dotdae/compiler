@@ -1,0 +1,4 @@
+var i ent := 10
+var texto cad:= 'Esto es un texto'
+mostrar('Hola mundo')
+mostrar(texto)
