@@ -158,8 +158,8 @@ bool isDataType(char* str, struct Token *token){
 
 bool esLimitador(char c){
 
-    if(c == ' ' || c == ';' || c == '[' || c == ']' || c == '(' || c == ')' || c == '\n' || c == EOF || c == '\t' ||
-       c == '+' || c == '-' || c == '*' || c == '/' || c == '<' || c == '>' || c == ':=' || c == '|' || c == '&' ||
+   if(c == ' ' || c == ';' || c == '[' || c == ']' || c == '(' || c == ')' || c == '\n' || c == EOF || c == '\t' ||
+       c == '+' || c == '-' || c == '*' || c == '/' || c == '<' || c == '>' || c == '=' || c == '|' || c == '&' ||
        c == '{' || c == '}'){
 
         return true;
@@ -243,6 +243,167 @@ bool isIdentifier(char* str, struct Token *token){
     return false;
 
 }
+
+
+// Verificar si existe un número.
+
+bool isNumber(char* str, struct Token *token){
+
+    int i = 0;
+    int point = 0;
+
+    if(str[0] >= '0' && str[0] <= '9'){
+
+        while(i <= strlen(str) - 1){
+
+            if(str[i] == '.'){
+
+                point++;
+
+            }
+
+            if(!(str[i] == '.' || (str[i] >= '0' && str[i] <= '9')) && point == 0){
+
+                return false;
+
+            }
+
+            i++;
+
+        }
+
+        strcpy(token->lexema, str);
+        token->type = number;
+        strcpy(token->nombre, "Constante");
+        token->value = atof(str);
+        
+        return true;
+
+    }
+
+    return false;
+
+}
+
+// Verificar operadores.
+
+bool operator(char c, struct Token *token){
+
+    if(c == '+' || c == '-' || c == '*' || c == '/' || c == '=' || c == '>' || c == '<' || c == '>=' || c == '<=' || c == '!='){
+
+        memset(token->lexema, 0, sizeof(token->lexema));
+
+        token->lexema[0] = c;
+        token->value = 0;
+        token->type = symbol;
+
+        switch (c){
+            
+            case '+':{
+                strcpy(token->nombre, "Mas");
+            }
+            case '-':{
+                strcpy(token->nombre, "Menos");
+            }
+            case '*':{
+                strcpy(token->nombre, "Por");
+            }
+            case '/':{
+                strcpy(token->nombre, "Entre");
+            }
+            case '=':{
+                strcpy(token->nombre, "Igual");
+            }
+            case '>':{
+                strcpy(token->nombre, "Mayor");
+            }
+            case '<':{
+                strcpy(token->nombre, "Menor");
+            }
+            case '>=':{
+                strcpy(token->nombre, "Mayor igual");
+            }
+            case '<=':{
+                strcpy(token->nombre, "Menor igual");
+            }
+            case '!=':{
+                strcpy(token->nombre, "Diferente");
+            }
+            default:
+                break;
+        }
+
+        return true;
+
+    }
+
+    return false;
+
+}
+
+
+// Verificar los terminadores de línea.
+
+bool isEndLine(char c, struct Token *token){
+
+    if(c == ';' || c == '[' || c == ']' || c == '(' || c == ')' || c == '"'|| c == '|'|| c == '&' || c == '{' || c == '}'){
+
+        memset(token->lexema, 0, sizeof(token->lexema));
+        token->lexema[0] = c;
+        token->type = symbol;
+        token->value = 0;
+
+        switch (c)
+        {
+            case ';':{
+                strcpy(token->nombre, "PuntoyComa");
+            }
+            case '[':{
+                strcpy(token->nombre, "corcheteIzquierdo");
+                break;
+            }
+            case ']':{
+                strcpy(token->nombre, "corcheteDerecho");
+                break;
+            }
+            case '(':{
+                strcpy(token->nombre, "parentesisIzquierdo");
+                break;
+            }
+            case ')':{
+                strcpy(token->nombre, "parentesisDerecho");
+                break;
+            }
+            case '"':{
+                strcpy(token->nombre, "comillaDoble");
+                break;
+            }
+            case '|':{
+                strcpy(token->nombre, "OR");
+                break;
+            }case '&':{
+                strcpy(token->nombre, "AND");
+                break;
+            }case '{':{
+                strcpy(token->nombre, "llaveIzquierda");
+                break;
+            }case '}':{
+                strcpy(token->nombre, "llaveDerecha");
+                break;
+            }
+            default:
+                break;
+        }
+
+        return true;
+
+    }
+
+    return false;
+
+}
+
+
 
 // Recorrer el archivo y leer cada token existente.
 
@@ -354,13 +515,104 @@ void readTokens(char* source){
                             cleanTokenList(token);
 
                     }
+                    else if(isNumber(aux, &token)){
+
+                        token.columnNumber = columna;
+                        token.lineNumbers = lines;
+                        insertToken(token);
+                        cleanTokenList(token);
+
+                    }
+                    else if(aux[9] == '"'){
+
+                        token.type = errorType;
+                        strcpy(token.nombre, "Error comilla");
+                        token.value = 0;
+                        strcpy(token.lexema, "Error comilla");
+                        token.columnNumber = columna;
+                        token.lineNumbers = lines;
+                        insertToken(token);
+                        cleanTokenList(token);
+
+                    }
+                    else{
+
+                        token.type = errorType;
+                        strcpy(token.nombre, "SYNTAX ERROR");
+                        token.value = 0;
+                        strcpy(token.lexema, "SYNTAX ERROR");
+                        token.columnNumber = columna;
+                        token.lineNumbers = lines;
+                        insertToken(token);
+                        cleanTokenList(token);
+
+                    }
+
+                    memset(aux, 9, sizeof(aux));
+                    y = 0;
+                    continue;
+
+                }
+                else{
+
+                    if(operator(source[x], &token)){
+
+                        token.columnNumber = columna;
+                        token.lineNumbers = lines;
+                        insertToken(token);
+                        cleanTokenList(token);
+
+                    }
+                    else if(isEndLine(source[x], &token)){
+
+                        if(source[x] == '\n'){
+
+                            lines++;
+                            columna = 0;
+
+                        }
+                        
+                        token.columnNumber = columna;
+                        token.lineNumbers = lines;
+                        insertToken(token);
+                        cleanTokenList(token);
+
+                    }
 
                 }
 
 
             }
+            else{
+
+                if(source[x] == '"'){
+
+                    cad = true;
+                    cadAuxiliar++;
+
+                }
+
+                aux[y] = source[x];
+                y++;
+
+            }
 
         }
+
+        columna++;
+        x++;
+
+    }
+    if(cad == true){
+
+        token.type = errorType;
+        strcpy(token.nombre, "Errro comilla");
+        token.value = 0;
+        strcpy(token.lexema, "Error comilla");
+        token.columnNumber = columna;
+        token.lineNumbers = lines;
+        insertToken(token);
+        cleanTokenList(token);
 
     }
 
