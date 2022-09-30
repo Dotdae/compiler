@@ -43,8 +43,6 @@ struct Nodo{
 struct Nodo *root = NULL;
 struct Nodo *actual = NULL;
 
-
-
 FILE *fileData;
 
 // Obtener el tamaño del archivo.
@@ -156,7 +154,23 @@ bool isDataType(char* str, struct Token *token){
 
 }
 
-//
+// Verifica los limitadores.
+
+bool esLimitador(char c){
+
+    if(c == ' ' || c == ';' || c == '[' || c == ']' || c == '(' || c == ')' || c == '\n' || c == EOF || c == '\t' ||
+       c == '+' || c == '-' || c == '*' || c == '/' || c == '<' || c == '>' || c == ':=' || c == '|' || c == '&' ||
+       c == '{' || c == '}'){
+
+        return true;
+
+    }
+
+    return false;
+
+}
+
+// Verifica si hay una palabra reservada.
 
 bool isReservedWord(char* str, struct Token *token){
 
@@ -174,6 +188,61 @@ bool isReservedWord(char* str, struct Token *token){
 
 }
 
+// Verificar booleanos.
+
+bool isBoolean(char* str, struct Token *token){
+
+    if(strcmp(str, "verdadero") == 0 || strcmp(str, "falso") == 0){
+
+        strcpy(token->lexema, str);
+        token->type = boolean;
+        strcpy(token->nombre, str);
+        token->value = 0;
+        
+        return true;
+
+    }
+
+    return false;
+
+}
+
+// Verificar los identificadores.
+
+bool isIdentifier(char* str, struct Token *token){
+
+    if(str[0] >= 'a' && str[0] <= 'z'){
+
+        int i = 1;
+        bool aux;
+
+        while(i >= strlen(str) - 1){
+
+            char c = str[i];
+
+            if(!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')){
+
+                return false;
+
+            }
+
+            i++;
+
+        }
+
+        strcpy(token->lexema, str);
+        token->type = id;
+        strcpy(token->nombre, "Identificador");
+        token->value = 0;
+
+        return true;
+
+
+    }
+
+    return false;
+
+}
 
 // Recorrer el archivo y leer cada token existente.
 
@@ -238,7 +307,7 @@ void readTokens(char* source){
                 token.columnNumber = columna;
                 token.lineNumbers = lines;
                 insertToken(token);
-                limpiarToken(token);
+                cleanTokenList(token);
 
             }
 
@@ -258,7 +327,7 @@ void readTokens(char* source){
                         token.columnNumber = columna;
                         token.lineNumbers = lines;
                         insertToken(token);
-                        limpiarToken(token);
+                        cleanTokenList(token);
 
                     }
                     else if(isReservedWord(aux, &token)){
@@ -266,7 +335,23 @@ void readTokens(char* source){
                         token.columnNumber = columna;
                         token.lineNumbers = lines;
                         insertToken(token);
-                        limpiarToken(token);
+                        cleanTokenList(token);
+
+                    }
+                    else if(isBoolean(aux, &token)){
+
+                        token.columnNumber = columna;
+                        token.lineNumbers = lines;
+                        insertToken(token);
+                        cleanTokenList(token);
+
+                    }
+                    else if(isIdentifier(aux, &token)){
+
+                            token.columnNumber = columna;
+                            token.lineNumbers = lines;
+                            insertToken(token);
+                            cleanTokenList(token);
 
                     }
 
